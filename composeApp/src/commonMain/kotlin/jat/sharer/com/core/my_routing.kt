@@ -66,18 +66,26 @@ fun Application.configureRouting() {
         downloadRoute()
         get("/{hashid}") {
             val filename = call.parameters["hashid"]!!
-            val deviceFile = DataStoreManager.getDeviceFiles().find { it.hashId == filename.toInt() }
+            val deviceFile =
+                DataStoreManager.getDeviceFiles().find { it.hashId == filename.toInt() }
             // get filename from request url
             // construct reference to file
             // ideally this would use a different filename
             deviceFile?.path?.let {
-                val file = JeyFile(deviceFile.path)
-                if (file.fileExists()) {
-                    call.respondBytes(deviceFile.byteArray)
-                }
-                call.respondRedirect("/")
+//                val file = JeyFile(deviceFile.path)
+//                if (file.fileExists()) {
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition.Attachment.withParameter(
+                        ContentDisposition.Parameters.FileName,
+                        deviceFile.name
+                    ).toString()
+                )
+                call.respondBytes(deviceFile.byteArray)
+//                }
             }
-            call.respond(HttpStatusCode.NotFound)
+            call.respondRedirect("/")
+//            call.respond(HttpStatusCode.NotFound)
         }
     }
 }
