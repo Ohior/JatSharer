@@ -372,10 +372,10 @@ object HomeScreen : Screen {
             // Handle picked files
             homeViewModel.makeDeviceFiles(files)
         }
-        Row(
+        Column(
             modifier = modifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             TextIcon(
                 modifier = Modifier
