@@ -18,8 +18,8 @@ actual fun getPlatform(): Platform = Platform.Ios(
     version = UIDevice.currentDevice.systemVersion
 )
 
-actual fun getJeyFileImpl(): JeyFileImpl {
-    return IosJeyFileImpl()
+actual fun getJeyFile(filePath: String): JeyFile {
+    return IosJeyFile(filePath)
 }
 
 actual fun createDataStore(): DataStore<Preferences> {

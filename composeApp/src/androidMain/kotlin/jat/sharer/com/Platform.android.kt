@@ -12,12 +12,12 @@ actual fun getPlatform(): Platform = Platform.Android(
     version = Build.VERSION.SDK_INT.toString()
 )
 
-actual fun getJeyFileImpl(): JeyFileImpl {
-    return AndroidJeyFileImpl(MainActivity.instance) // Provide your application context here
-}
-
 actual fun createDataStore(): DataStore<Preferences> {
     return PreferenceDataStoreFactory.createWithPath(
         produceFile = { MainActivity.instance.filesDir.resolve(DATA_STORE_FILE_NAME).absolutePath.toPath() }
     )
+}
+
+actual fun getJeyFile(filePath: String): JeyFile {
+    return AndroidJeyFile(MainActivity.instance, filePath)
 }

@@ -1,27 +1,33 @@
 package jat.sharer.com
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
-import io.ktor.utils.io.*
-import okio.Path.Companion.toPath
 
 sealed class Platform {
     data class Ios(val name: String, val version: String? = null) : Platform()
     data class Android(val name: String, val version: String? = null) : Platform()
 }
 
-interface JeyFileImpl {
-    suspend fun downloadFile(filePath: String, data: ByteArray): Boolean
-    suspend fun fileExists(filePath: String): Boolean
-}
-
 
 expect fun getPlatform(): Platform
 
-expect fun getJeyFileImpl(): JeyFileImpl
+enum class FileInfo {
+    NAME, PATH, SIZE, LAST_MODIFIED
+}
+
+abstract class JeyFile(private val filePath: String) {
+    abstract suspend fun fileExists(): Boolean
+    abstract suspend fun downloadFile(data: ByteArray): Boolean
+    abstract fun readBytes(): ByteArray
+    abstract suspend fun readBytes(byteArray: suspend (ByteArray)-> Unit)
+    abstract fun getFileInfo(): Map<FileInfo, String>
+
+}
+
+expect fun getJeyFile(filePath: String): JeyFile
 
 internal const val DATA_STORE_FILE_NAME = "prefs.preferences_pb"
+
 expect fun createDataStore(): DataStore<Preferences>
 //expect fun createDataStore(producePath: () -> String): DataStore<Preferences>
 //{

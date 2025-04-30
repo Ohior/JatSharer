@@ -1,91 +1,111 @@
 package jat.sharer.com.core
 
-import io.github.vinceglb.filekit.core.FileKit
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.utils.io.*
-import jat.sharer.com.JeyFile
-import jat.sharer.com.Platform
-import jat.sharer.com.getPlatform
+import io.ktor.http.ContentDisposition
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.server.application.Application
+import io.ktor.server.request.receiveMultipart
+import io.ktor.server.response.header
+import io.ktor.server.response.respondBytesWriter
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
+import io.ktor.utils.io.toByteArray
+import io.ktor.utils.io.writeByteArray
+import jat.sharer.com.FileInfo
+import jat.sharer.com.getJeyFile
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
-
-fun Route.downloadRoute() {
-    post("/upload") {
-        call.respondRedirect("/")
-        call.respondText("Files uploaded successfully")
-        val multipartData = call.receiveMultipart()
-        multipartData.forEachPart { part ->
-            when (part) {
-                is PartData.FileItem -> {
-                    val fileName = part.originalFileName ?: "unknown"
-                    println("Filename : $fileName")
-                    val bytes = part.provider().toByteArray()
-                    // Save the file to disk or process it
-                    when (getPlatform()) {
-                        is Platform.Android -> {
-                            JeyFile(fileName).apply {
-                                downloadFile(bytes)
-                            }
-                        }
-
-                        is Platform.Ios -> {
-                            val f = fileName.split(".", limit = 2)
-                            FileKit.saveFile(bytes, f[0], f[1])
-                        }
-                    }
-                    println("Bytes : $bytes")
-                }
-
-                else -> Unit
-            }
-            part.dispose()
-        }
-    }
-}
 
 fun Application.configureRouting() {
     routing {
         get("/") {
-            call.respondText(contentType = ContentType.Text.Html) {
-                HtmlTemplate.myHtmlPage(
-                    contents = listOf(HtmlTemplate.selectFileForm()),
-                    details = DataStoreManager.getDeviceFiles().map { m1 ->
-                        HtmlTemplate.fileItem(
-                            title = m1.name,
-                            description = m1.path ?: "No Path",
-                            urlPath = "${m1.hashId}",
-                        )
-                    }
-                )
-            }
+            val htmlContent = generateFileSelectorPage()
+            // Respond with the generated HTML
+            call.respondText(htmlContent, ContentType.Text.Html)
         }
-        downloadRoute()
-        get("/{hashid}") {
-            val filename = call.parameters["hashid"]!!
-            val deviceFile =
-                DataStoreManager.getDeviceFiles().find { it.hashId == filename.toInt() }
-            // get filename from request url
-            // construct reference to file
-            // ideally this would use a different filename
-            deviceFile?.path?.let {
-//                val file = JeyFile(deviceFile.path)
-//                if (file.fileExists()) {
+        // You might serve CSS separately
+        get("/styles.css") {
+            call.respondText(
+                """
+                     body { font-family: sans-serif; }
+                     .content { color: blue; }
+                     .readable { line-height: 1.6; }
+                 """.trimIndent(), ContentType.Text.CSS
+            )
+        }
+        post("/upload") {
+            val multipartData = call.receiveMultipart()
+            multipartData.forEachPart { part ->
+                when (part) {
+                    is PartData.FileItem -> {
+                        val fileName = part.originalFileName ?: "unknown"
+                        println("Filename : $fileName")
+                        val bytes = part.provider().toByteArray()
+                        // Save the file to disk or process it
+                        getJeyFile(fileName).downloadFile(bytes)
+                        println("Bytes : $bytes")
+                    }
+
+                    else -> Unit
+                }
+                part.dispose()
+            }
+            call.respondRedirect("/")
+            call.respondText("Files uploaded successfully")
+        }
+        get("/show-files") {
+            val files = DataStoreManager.getDeviceFiles()
+            println("DEBUG : $files")
+            val htmlContent = generateShowFilesPage(files)
+            // Respond with the generated HTML
+            call.respondText(htmlContent, ContentType.Text.Html)
+        }
+        get("/download/{filename}") {
+            val filename = call.parameters["filename"]!!
+            println("DEBUG1 : $filename")
+
+            val deviceFile = DataStoreManager.getDeviceFiles()
+            val jeyFile = deviceFile.firstNotNullOfOrNull {
+                if (it.hashId == filename.toInt()) {
+                    println("DEBUG2 : ${Json.encodeToString(it)}")
+                    getJeyFile(it.path)
+                } else null
+            }
+
+            println("DEBUG3 : $deviceFile")
+            if (jeyFile != null) {
+                println("DEBUG4 : ${jeyFile.getFileInfo()}")
+
                 call.response.header(
                     HttpHeaders.ContentDisposition,
                     ContentDisposition.Attachment.withParameter(
                         ContentDisposition.Parameters.FileName,
-                        deviceFile.name
+                        jeyFile.getFileInfo()[FileInfo.NAME] ?: filename
                     ).toString()
                 )
-                call.respondBytes(deviceFile.byteArray)
-//                }
+
+                call.respondBytesWriter(
+                    contentType = ContentType.Application.OctetStream,
+                    contentLength = jeyFile.getFileInfo()[FileInfo.SIZE]?.toLong() ?: 0L
+                ) {
+                    jeyFile.readBytes { bys ->
+                        writeByteArray(bys)
+                    }
+                }
+
+                DataStoreManager.deleteDeviceFile(deviceFile.first { it.hashId == filename.toInt() })
+                println("DEBUG5: DONE")
+                return@get  // Ensure it doesn’t fall through
             }
+
             call.respondRedirect("/")
-//            call.respond(HttpStatusCode.NotFound)
         }
+
     }
 }

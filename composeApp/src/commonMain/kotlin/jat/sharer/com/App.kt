@@ -12,13 +12,12 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun App(permissions: (() -> Unit)? = null) {
+    DataStoreManager.initializeDataStore()
     JatSharerTheme {
-        DataStoreManager.initializeDataStore()
         LaunchedEffect(Unit) {
             if (permissions != null) {
                 permissions()
             }
-            DataStoreManager.deleteAllDeviceFile()
         }
         Navigator(HomeScreen)
     }

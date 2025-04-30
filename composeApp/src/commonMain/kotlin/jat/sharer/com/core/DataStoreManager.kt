@@ -20,6 +20,7 @@ object DataStoreManager {
         preferences = createDataStore()
     }
 
+
     suspend fun saveDeviceFile(deviceFiles: List<DeviceFile>) {
         preferences.edit { ds ->
             ds[deviceFileKey] = Json.encodeToString(deviceFiles)

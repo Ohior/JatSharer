@@ -1,37 +1,41 @@
 package jat.sharer.com.core
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import io.ktor.server.cio.*
-import io.ktor.server.engine.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.cio.CIO
+import io.ktor.server.cio.CIOApplicationEngine
+import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.embeddedServer
 import jat.sharer.com.utils.Constants
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withContext
 
 object ServerManager {
     val listenToServer = MutableStateFlow(false)
-    var uploadRoute = mutableStateOf("/")
     private var serverEngine: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine. Configuration>? = null
-    fun startServer() {
-        if (serverEngine == null) {
-            serverEngine = embeddedServer(
-                CIO,
-                port = Constants.PORT,
-                host = Constants.HOST
-            ) {
-                configureRouting()
-            }.apply {
-                start(wait = false) // Start without blocking
+    suspend fun startServer() {
+        withContext(Dispatchers.IO) {
+            if (serverEngine == null) {
+                serverEngine = embeddedServer(
+                    CIO,
+                    port = Constants.PORT,
+                    host = Constants.HOST
+                ) {
+                    configureRouting()
+                }.apply {
+                    start(wait = false) // Start without blocking
+                }
+                listenToServer.value = true
             }
-            listenToServer.value = true
         }
     }
 
-    fun stopServer() {
-        serverEngine?.stop(0, 0)
-        serverEngine = null
-        listenToServer.value = false
+    suspend fun stopServer() {
+        withContext(Dispatchers.IO) {
+            serverEngine?.stop(0, 0)
+            serverEngine = null
+            listenToServer.value = false
+        }
     }
 }
 //

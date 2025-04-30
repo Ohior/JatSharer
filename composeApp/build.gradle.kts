@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -47,16 +46,18 @@ kotlin {
             // Ktor
             implementation("io.ktor:ktor-server-core:3.0.2")
             implementation("io.ktor:ktor-server-cio:3.0.2")
-//            implementation("io.ktor:ktor-client-core:3.0.2")
+            implementation("io.ktor:ktor-client-core:3.0.2")
+            implementation("io.ktor:ktor-client-cio:3.0.2")
 
             implementation("io.ktor:ktor-server-content-negotiation:3.0.2")
             implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.2")
+            implementation("org.jetbrains.kotlinx:kotlinx-html:0.8.0")
             // Voyager
             val voyagerVersion = "1.1.0-beta02"
             implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
             implementation("cafe.adriel.voyager:voyager-screenmodel:$voyagerVersion")
             // Enables FileKit with Composable utilities
-            implementation("io.github.vinceglb:filekit-compose:0.8.8")
+//            implementation("io.github.vinceglb:filekit-compose:0.8.8")
             // shared pref
             api(libs.datastore.preferences)
             api(libs.datastore)
@@ -66,7 +67,7 @@ kotlin {
 
 android {
     namespace = "jat.sharer.com"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "jat.sharer.com"

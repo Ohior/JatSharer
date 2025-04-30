@@ -21,7 +21,7 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
-import jat.sharer.com.models.StringAnotation
+import jat.sharer.com.models.StringAnnotation
 import jat.sharer.com.ui.theme.PixelDensity
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
@@ -32,13 +32,13 @@ fun TextIcon(
     text: String,
     modifier: Modifier = Modifier,
     style: TextStyle = TextStyle(),
-    arrangment: Arrangement.Horizontal = Arrangement.Center,
+    arrangement: Arrangement.Horizontal = Arrangement.Center,
     leadingIcon: @Composable (() -> Unit?)? = null,
     trailingIcon: @Composable (() -> Unit?)? = null
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = arrangment,
+        horizontalArrangement = arrangement,
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (leadingIcon != null) {
@@ -59,7 +59,7 @@ fun MyHorizontalPager(
     pagerCount: Int,
     content: @Composable (Int) -> Unit
 ) {
-    val pagerState = rememberPagerState() { pagerCount }
+    val pagerState = rememberPagerState { pagerCount }
 
     Column(
         modifier = modifier,
@@ -94,7 +94,7 @@ fun MyHorizontalPager(
 @Composable
 fun AnnotatedText(
     modifier: Modifier = Modifier,
-    texts: List<StringAnotation>,
+    texts: List<StringAnnotation>,
     textAlign: TextAlign = TextAlign.Center
 ) {
     val annotatedString = buildAnnotatedString {
