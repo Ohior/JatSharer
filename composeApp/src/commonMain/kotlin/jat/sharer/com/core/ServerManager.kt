@@ -38,28 +38,3 @@ object ServerManager {
         }
     }
 }
-//
-//fun Route.homeRoute() {
-//    get("/") {
-//        call.respondText(contentType = ContentType.Text.Html) {
-//            HtmlTemplate.myHtmlPage(
-//                contents = listOf(
-//                    HtmlTemplate.tagButton(),
-//                    HtmlTemplate.selectFileForm(),
-//                    HtmlTemplate.tagButton(),
-//                )
-//            )
-//        }
-//    }
-//}
-//
-//fun Route.downloadRoute(paths:List<String>) {
-//    get("/") {
-//        val file = getFileSaver.saveFile("files/sample.pdf") // Change path as needed
-//        if (file.exists()) {
-//            call.respondBytes (file)
-//        } else {
-//            call.respondText("File not found", status = io.ktor.http.HttpStatusCode.NotFound)
-//        }
-//    }
-//}

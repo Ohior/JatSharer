@@ -1,61 +1,35 @@
 package jat.sharer.com.core
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import jat.sharer.com.createDataStore
-import jat.sharer.com.models.DeviceFile
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import jat.sharer.com.JeyFile
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
+object SharedDataRepository {
+    // Private mutable state flow for internal updates
+    private val _deviceFiles = MutableStateFlow<List<JeyFile>>(emptyList())
 
-object DataStoreManager {
-    private lateinit var preferences: DataStore<Preferences>
-    private val deviceFileKey = stringPreferencesKey("DEVICE_FILE")
+    // Public read-only flow to observe the list
+    val deviceFiles: StateFlow<List<JeyFile>> = _deviceFiles.asStateFlow()
 
-    fun initializeDataStore() {
-        preferences = createDataStore()
+    // Method to add files (avoiding duplicates)
+    fun addDeviceFiles(files: List<JeyFile>) {
+        val currentFiles = _deviceFiles.value.toMutableList()
+        val newFiles = files.filterNot { currentFiles.contains(it) }
+        currentFiles.addAll(newFiles)
+        _deviceFiles.value = currentFiles
     }
 
-
-    suspend fun saveDeviceFile(deviceFiles: List<DeviceFile>) {
-        preferences.edit { ds ->
-            ds[deviceFileKey] = Json.encodeToString(deviceFiles)
-        }
+    // Optional: Method to clear or remove files
+    fun clearDeviceFiles() {
+        _deviceFiles.value = emptyList()
     }
 
-    suspend fun getDeviceFiles(): List<DeviceFile> {
-        var df = listOf<DeviceFile>()
-        preferences.edit { ds ->
-            df = Json.decodeFromString<List<DeviceFile>>(ds[deviceFileKey] ?: "[]")
-        }
-        return df
+    fun removeDeviceFiles(file: JeyFile) {
+        val currentFiles = _deviceFiles.value.toMutableList()
+        currentFiles.remove(file)
+        _deviceFiles.value = currentFiles
     }
 
-    suspend fun deleteDeviceFile(deviceFile: DeviceFile) {
-        var d :List<DeviceFile>?= null
-        preferences.edit { ds ->
-            val data = ds[deviceFileKey]?.let { Json.decodeFromString<List<DeviceFile>>(it) }
-            if (data != null) {
-                 d = data.filter { it.path != deviceFile.path }
-            }
-        }
-        d?.let { saveDeviceFile(it) }
-    }
-
-    fun getDeviceFileFlow(): Flow<List<DeviceFile>> {
-        return preferences
-            .data
-            .map {
-                val df = it[deviceFileKey] ?: "[]"
-                Json.decodeFromString<List<DeviceFile>>(df)
-            }
-    }
-
-    suspend fun deleteAllDeviceFile() {
-        preferences.edit { pf -> pf.remove(deviceFileKey) }
-    }
 }
+

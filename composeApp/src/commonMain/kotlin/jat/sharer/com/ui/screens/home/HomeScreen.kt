@@ -31,7 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import jat.sharer.com.core.ServerManager
-import jat.sharer.com.rememberMultipleFilePickerLauncher
+import jat.sharer.com.rememberJFilePicker
 import jat.sharer.com.ui.TextIcon
 import jat.sharer.com.ui.theme.PixelDensity
 import jat.sharer.com.utils.Constants
@@ -58,6 +58,7 @@ object HomeScreen : Screen {
         ) { pv ->
             val homeViewModel = rememberScreenModel { HomeViewModel() }
             val serverState by ServerManager.listenToServer.collectAsState(false)
+            val deviceFiles by homeViewModel.deviceFiles.collectAsState()
             LaunchedEffect(serverState) {
                 if (serverState) {
                     ServerManager.startServer()
@@ -68,21 +69,18 @@ object HomeScreen : Screen {
             InFoPopup(homeViewModel.infoPopup) { homeViewModel.infoPopup = false }
             Column(modifier = Modifier.fillMaxSize().padding(pv)) {
                 // DISPLAY FILES IF SELECTED ELSE DISPLAY INFO
-                if (homeViewModel.deviceFiles.isEmpty()) {
+                if (deviceFiles.isEmpty()) {
                     InfoHalfScreen(Modifier.weight(1f)) { homeViewModel.infoPopup = true }
                 } else {
                     FilesHalfScreen(
                         modifier = Modifier.weight(1f),
-                        files = homeViewModel.deviceFiles,
+                        files = deviceFiles,
                         onSwipe = { dv, df ->
                             if (dv == DismissValue.DismissedToStart) {
                                 homeViewModel.deleteDeviceFiles(df)
                                 true
                             } else false
                         },
-                        onClick = { df ->
-                            homeViewModel.downloadFile(df)
-                        }
                     )
                 }
                 // DISPLAY START STOP SERVER BUTTON
@@ -166,7 +164,7 @@ object HomeScreen : Screen {
         serverOnclick: () -> Unit,
     ) {
         // Pick files from Compose
-        val launcher = rememberMultipleFilePickerLauncher { files ->
+        val launcher = rememberJFilePicker { files ->
             // Handle picked files
             homeViewModel.makeDeviceFiles(files)
         }
@@ -210,7 +208,7 @@ object HomeScreen : Screen {
                         RoundedCornerShape(14f)
                     )
                     .clickable(enabled = !active, onClick = {
-                        launcher.launch(true, listOf("*/*"))
+                        launcher.launch(listOf("*/*"))
                     })
                     .padding(PixelDensity.small),
                 text = "Select Files",

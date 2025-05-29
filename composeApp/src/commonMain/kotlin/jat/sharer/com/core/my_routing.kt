@@ -1,25 +1,15 @@
 package jat.sharer.com.core
 
-import io.ktor.http.ContentDisposition
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.content.PartData
-import io.ktor.http.content.forEachPart
-import io.ktor.server.application.Application
-import io.ktor.server.request.receiveMultipart
-import io.ktor.server.response.header
-import io.ktor.server.response.respondBytesWriter
-import io.ktor.server.response.respondRedirect
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
-import io.ktor.utils.io.toByteArray
-import io.ktor.utils.io.writeByteArray
+import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.utils.io.*
 import jat.sharer.com.FileInfo
+import jat.sharer.com.JeyFile
 import jat.sharer.com.getJeyFile
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 
 fun Application.configureRouting() {
@@ -42,51 +32,53 @@ fun Application.configureRouting() {
         post("/upload") {
             val multipartData = call.receiveMultipart()
             multipartData.forEachPart { part ->
-                when (part) {
-                    is PartData.FileItem -> {
-                        val fileName = part.originalFileName ?: "unknown"
-                        println("Filename : $fileName")
-                        val bytes = part.provider().toByteArray()
-                        // Save the file to disk or process it
-                        getJeyFile(fileName).downloadFile(bytes)
-                        println("Bytes : $bytes")
-                    }
-
-                    else -> Unit
+                if (part is PartData.FileItem) {
+                    val fileName = part.originalFileName ?: "unknown"
+                    println("Received file: $fileName")
+                    getJeyFile(fileName).downloadFile(part.provider())
                 }
                 part.dispose()
             }
-            call.respondRedirect("/")
-            call.respondText("Files uploaded successfully")
         }
+
+        post("/upload/{filename}") {
+            val filename = call.parameters["filename"] ?: return@post call.respond(HttpStatusCode.BadRequest, null)
+            println("Receiving file: $filename")
+
+            val file = getJeyFile(filename)
+
+            call.receiveChannel().copyAndClose(file.byteChannel())
+            call.respondRedirect("/")
+
+            println("Upload of $filename completed")
+        }
+
+
         get("/show-files") {
-            val files = DataStoreManager.getDeviceFiles()
-            println("DEBUG : $files")
+            val files = SharedDataRepository.deviceFiles.value
+            println("DEBUG : ${files.toList<JeyFile>()}")
             val htmlContent = generateShowFilesPage(files)
             // Respond with the generated HTML
             call.respondText(htmlContent, ContentType.Text.Html)
         }
         get("/download/{filename}") {
-            val filename = call.parameters["filename"]!!
-            println("DEBUG1 : $filename")
+            val filehash = call.parameters["filename"]!!
+            println("DEBUG1 : $filehash")
 
-            val deviceFile = DataStoreManager.getDeviceFiles()
-            val jeyFile = deviceFile.firstNotNullOfOrNull {
-                if (it.hashId == filename.toInt()) {
-                    println("DEBUG2 : ${Json.encodeToString(it)}")
-                    getJeyFile(it.path)
-                } else null
-            }
+            val deviceFile = SharedDataRepository.deviceFiles.value //DataStoreManager.getDeviceFiles()
+            println("DEBUG2 :$filehash \n ${deviceFile[0].getFileInfo()}")
+            val jeyFile = deviceFile.find { it.getFileInfo()[FileInfo.HASH_ID]!!.toInt() == filehash.toInt() }
 
-            println("DEBUG3 : $deviceFile")
+            println("DEBUG3 : $jeyFile")
             if (jeyFile != null) {
+                SharedDataRepository.removeDeviceFiles(jeyFile)
                 println("DEBUG4 : ${jeyFile.getFileInfo()}")
 
                 call.response.header(
                     HttpHeaders.ContentDisposition,
                     ContentDisposition.Attachment.withParameter(
                         ContentDisposition.Parameters.FileName,
-                        jeyFile.getFileInfo()[FileInfo.NAME] ?: filename
+                        jeyFile.getFileInfo()[FileInfo.NAME] ?: "title_unknown"
                     ).toString()
                 )
 
@@ -98,14 +90,9 @@ fun Application.configureRouting() {
                         writeByteArray(bys)
                     }
                 }
-
-                DataStoreManager.deleteDeviceFile(deviceFile.first { it.hashId == filename.toInt() })
                 println("DEBUG5: DONE")
-                return@get  // Ensure it doesn’t fall through
             }
-
             call.respondRedirect("/")
         }
-
     }
 }

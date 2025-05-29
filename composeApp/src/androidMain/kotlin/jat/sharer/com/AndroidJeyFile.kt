@@ -7,11 +7,14 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.net.toUri
+import io.ktor.util.cio.writeChannel
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -21,58 +24,58 @@ class AndroidJeyFile(
     private val localContext: Context,
     private val filePath: String
 ) : JeyFile(filePath) {
-    override suspend fun downloadFile(data: ByteArray): Boolean {
-        withContext(Dispatchers.IO) {
-            val downloadsDir =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val file = File(downloadsDir, filePath)
-            FileOutputStream(file).use { outputStream ->
-                outputStream.write(data)
-                outputStream.flush()
-            }
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    localContext,
-                    "File saved successfully${file.absoluteFile}",
-                    Toast.LENGTH_SHORT
-                ).show()
+    override fun byteChannel(): ByteWriteChannel {
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+
+        val file = File(downloadsDir, filePath).apply {
+            parentFile?.mkdirs() // Create parent directories if needed
+        }
+        return file.writeChannel()
+    }
+
+    override suspend fun downloadFile(data: ByteReadChannel): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+val downloadsDir =
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+
+                val file = File(downloadsDir, filePath)
+                file.outputStream().use { outputStream ->
+                    // Read from the ByteReadChannel and write to file in chunks
+                    val buffer = ByteArray(8 * 1024)
+                    while (!data.isClosedForRead) {
+                        val bytesRead = data.readAvailable(buffer)
+                        if (bytesRead == -1) break
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                    outputStream.flush()
+                }
+                // Show success notification on main thread
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        MainActivity.instance,
+                        "File saved to ${file.absolutePath}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                true
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        MainActivity.instance,
+                        "Download failed: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                false
             }
         }
-        return true
     }
 
     override suspend fun fileExists(): Boolean {
         return File(filePath).exists()
     }
-
-//    private fun getBytesFromUri(context: Context, uriPath: String): ByteArray? {
-//        val contentResolver = context.contentResolver
-//        var inputStream: InputStream? = null
-//        var byteArray: ByteArray? = null
-//
-//        try {
-//            inputStream = contentResolver.openInputStream(uriPath.toUri())
-//            inputStream?.let {
-//                byteArray = it.readBytes()
-//            }
-//        } catch (e: SecurityException) {
-//            // Handle cases where you don't have the necessary permissions
-//            e.printStackTrace()
-//            return null
-//        } catch (e: Exception) {
-//            // Handle other potential exceptions (e.g., file not found)
-//            e.printStackTrace()
-//            return null
-//        } finally {
-//            try {
-//                inputStream?.close()
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            }
-//        }
-//
-//        return byteArray
-//    }
 
     private fun getBytesFromUri(context: Context, uriPath: String): ByteArray? {
         val contentResolver = context.contentResolver
@@ -108,7 +111,8 @@ class AndroidJeyFile(
                         val buffer = ByteArray(4096) // 4KB chunks
                         var bytesRead: Int
                         while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                            val chunk = buffer.copyOf(bytesRead) // Create a new array with the actual bytes read
+                            val chunk =
+                                buffer.copyOf(bytesRead) // Create a new array with the actual bytes read
                             byteArray(chunk) // Process each chunk
                         }
                     }
@@ -120,10 +124,11 @@ class AndroidJeyFile(
             val contentResolver = localContext.contentResolver
             try {
                 contentResolver.openInputStream(filePath.toUri())?.use { input ->
-                    val buffer = ByteArray(1024*10) // 1MB chunks
+                    val buffer = ByteArray(1024 * 10) // 1MB chunks
                     var bytesRead: Int
                     while (input.read(buffer).also { bytesRead = it } != -1) {
-                        val chunk = buffer.copyOf(bytesRead) // Create a new array with the actual bytes read
+                        val chunk =
+                            buffer.copyOf(bytesRead) // Create a new array with the actual bytes read
                         byteArray(chunk) // Process each chunk
                     }
                 }
@@ -175,6 +180,7 @@ class AndroidJeyFile(
                     localContext,
                     filePath.toUri()
                 ) // Try another way for API 19+
+                val filehash = path.hashCode()
                 val size = cursor.getLong(sizeIndex).toString()
                 val lastModifiedMillis =
                     cursor.getLong(modifiedIndex) * 1000L // Convert seconds to milliseconds
@@ -187,18 +193,12 @@ class AndroidJeyFile(
                     FileInfo.NAME to name,
                     FileInfo.PATH to (path ?: "N/A"),
                     FileInfo.SIZE to size,
-                    FileInfo.LAST_MODIFIED to lastModified
+                    FileInfo.LAST_MODIFIED to lastModified,
+                    FileInfo.HASH_ID to filehash.toString()
                 )
             }
         }
         return emptyMap()
-//        val file = localContext.contentResolver.openAssetFile (filePath.toUri(), "r")
-//        return mapOf(
-//            FileInfo.NAME to file.name,
-//            FileInfo.PATH to file.absolutePath,
-//            FileInfo.SIZE to file.size().toString(),
-//            FileInfo.LAST_MODIFIED to file.lastModified().toString()
-//        )
     }
 
     // Helper function for getting the actual path for certain Uri types on API 19+

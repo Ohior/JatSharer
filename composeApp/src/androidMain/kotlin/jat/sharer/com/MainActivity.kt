@@ -3,6 +3,7 @@ package jat.sharer.com
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -54,12 +55,19 @@ class MainActivity : ComponentActivity() {
         return Pair(true, null)
     }
 
-    companion object{
-        lateinit var instance:MainActivity
+    companion object {
+        lateinit var instance: MainActivity
     }
+
+    private var wakeLock: PowerManager.WakeLock? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         instance = this
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        // Before starting the copy operation for a connection:
+        wakeLock =
+            powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::FileServerWakeLockTag")
+        wakeLock?.acquire(20 * 60 * 1000L /* 20 minute timeout, adjust as needed */) // Timeout is a safeguard
         setContent {
             val permissionDenied by remember { mutableStateOf(checkPermission()) }
             Surface(modifier = Modifier.fillMaxSize()) {
@@ -67,7 +75,11 @@ class MainActivity : ComponentActivity() {
                     permissionDenied.first -> {
                         App()
                     }
-                    ActivityCompat.shouldShowRequestPermissionRationale(this, permissionDenied.second!!) -> {
+
+                    ActivityCompat.shouldShowRequestPermissionRationale(
+                        this,
+                        permissionDenied.second!!
+                    ) -> {
                         AlertDialog(
                             title = { Text("Permission Required") },
                             text = { Text("This app requires permission to access your storage.") },
@@ -75,20 +87,32 @@ class MainActivity : ComponentActivity() {
                                 finish()
                             },
                             buttons = {
-                                Button(modifier = Modifier.fillMaxWidth(0.8f).padding(30.dp), onClick = {
-                                    requestPermissionLauncher.launch(permissionArray)
-                                }) {
+                                Button(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.8f)
+                                        .padding(30.dp),
+                                    onClick = {
+                                        requestPermissionLauncher.launch(permissionArray)
+                                    }) {
                                     Text("OK")
                                 }
                             }
                         )
 
                     }
+
                     else -> {
                         App { requestPermissionLauncher.launch(permissionArray) }
                     }
                 }
             }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (wakeLock?.isHeld == true) {
+            wakeLock?.release()
         }
     }
 }
