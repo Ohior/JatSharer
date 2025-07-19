@@ -2,6 +2,10 @@
 
 package jat.sharer.com
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -36,4 +40,13 @@ actual fun createDataStore(): DataStore<Preferences> {
             p.toPath()
         }
     )
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+actual fun rememberScreenSize(): Pair<Int, Int> {
+    val size = LocalWindowInfo.current
+    return remember(size.containerSize) {
+        Pair(size.containerSize.width, size.containerSize.height)
+    }
 }

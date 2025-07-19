@@ -11,24 +11,28 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import jat.sharer.com.FileInfo
 import jat.sharer.com.JeyFile
 import jat.sharer.com.models.StringAnnotation
+import jat.sharer.com.rememberScreenSize
 import jat.sharer.com.ui.AnnotatedText
 import jat.sharer.com.ui.ImageSwitcher
 import jat.sharer.com.ui.drawUnderLine
 import jat.sharer.com.ui.theme.PixelDensity
 import jat.sharer.com.utils.Constants
 import jat.sharer.com.utils.MediaType
-import jat.sharer.com.utils.SnippetTools
+import jat.sharer.com.utils.Tools
 import jatsharer.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 
@@ -39,13 +43,20 @@ fun FilesHalfScreen(
     files: List<JeyFile>,
     onSwipe: (DismissValue, JeyFile) -> Boolean
 ) {
+    val size = rememberScreenSize()
+    val isPortrait = remember(size) {
+        mutableStateOf(size.first + size.second / 3.5 < size.second)
+    }
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2), // 2 columns
+        columns = GridCells.Fixed(if (isPortrait.value) 1 else 2), // 2 columns
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(PixelDensity.small),
         verticalArrangement = Arrangement.spacedBy(PixelDensity.medium)
     ) {
-        items(items = files, key = { it.getFileInfo()[FileInfo.HASH_ID]!! }) { file ->
+        items(items = files, key = {
+            it.getFileInfo()[FileInfo.NAME] + Tools.generateSimpleUid(7)
+        }) { file ->
             val swipeState = rememberDismissState {
                 onSwipe(it, file)
             }
@@ -76,12 +87,7 @@ fun FilesHalfScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(PixelDensity.medium))
                         .background(MaterialTheme.colors.primary)
-                        .padding(
-                            top = PixelDensity.small,
-                            start = PixelDensity.small,
-                            end = PixelDensity.small
-                        )
-                        .drawUnderLine(MaterialTheme.colors.primaryVariant),
+                        .padding(horizontal = PixelDensity.small),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(PixelDensity.medium)
                 ) {
@@ -108,7 +114,7 @@ fun FilesHalfScreen(
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = SnippetTools.formatByteSize(fileInfo[FileInfo.SIZE]?.toLong() ?: 0L),
+                            text = Tools.formatByteSize(fileInfo[FileInfo.SIZE]?.toLong() ?: 0L),
                             fontWeight = FontWeight.Light,
                             color = MaterialTheme.colors.background,
                             maxLines = 1,
@@ -118,46 +124,5 @@ fun FilesHalfScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun InfoHalfScreen(modifier: Modifier = Modifier, infoPopup: () -> Unit) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        ImageSwitcher(
-            modifier = Modifier
-                .padding(PixelDensity.large)
-                .size(PixelDensity.large * 5),
-            images = listOf(
-                Res.drawable.image,
-                Res.drawable.folder,
-                Res.drawable.musical_note,
-                Res.drawable.video,
-                Res.drawable.docs
-            ),
-        )
-        AnnotatedText(
-            texts = listOf(
-                StringAnnotation(
-                    text = "Share files between mobile phones, PC",
-                    style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.Bold)
-                        .toSpanStyle(),
-                ),
-                StringAnnotation(
-                    text = " http://${Constants.HOST}:${Constants.PORT}",
-                    style = MaterialTheme.typography.h5.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary,
-                        textDecoration = TextDecoration.Underline
-                    ).toSpanStyle(),
-                    key = 1,
-                    onClick = { infoPopup() }
-                )
-            )
-        )
     }
 }

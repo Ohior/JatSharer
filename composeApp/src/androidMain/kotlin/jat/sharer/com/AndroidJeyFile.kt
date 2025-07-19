@@ -36,7 +36,7 @@ class AndroidJeyFile(
     override suspend fun downloadFile(data: ByteReadChannel): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-val downloadsDir =
+                val downloadsDir =
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
                 val file = File(downloadsDir, filePath)
@@ -169,21 +169,19 @@ val downloadsDir =
 
         contentResolver.query(filePath.toUri(), projection, null, null, null)?.use { cursor ->
             if (cursor.moveToFirst()) {
-                val nameIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
                 val pathIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA)
-                val sizeIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
-                val modifiedIndex =
-                    cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED)
+                val nameIndex = runCatching { cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME) }
+                val sizeIndex = runCatching { cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE) }
+                val modifiedIndex = runCatching { cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED) }
 
-                val name = cursor.getString(nameIndex)
                 val path = cursor.getString(pathIndex) ?: getPathFromUriApi19(
                     localContext,
                     filePath.toUri()
                 ) // Try another way for API 19+
+                val name = cursor.getString(nameIndex.getOrDefault(0))
                 val filehash = path.hashCode()
-                val size = cursor.getLong(sizeIndex).toString()
-                val lastModifiedMillis =
-                    cursor.getLong(modifiedIndex) * 1000L // Convert seconds to milliseconds
+                val size = cursor.getLong(sizeIndex.getOrDefault(0)).toString()
+                val lastModifiedMillis = cursor.getLong(modifiedIndex.getOrDefault(0)) * 1000L // Convert seconds to milliseconds
                 val lastModified =
                     SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
                         Date(lastModifiedMillis)

@@ -2,7 +2,7 @@ package jat.sharer.com.utils
 
 import kotlin.math.pow
 
-object SnippetTools {
+object Tools {
     fun formatByteSize(bytes: Long): String {
         if (bytes <= 0) return "0 bytes"
 
@@ -13,4 +13,12 @@ object SnippetTools {
         val unit = units[digitGroups]
         return "${kotlin.math.round(value * 100) / 100.0}$unit"
     }
+
+    fun generateSimpleUid(maxLength: Int): String {
+        val characters = "QWERTYUIOPLKJHGFDSAZXCVBNMqwertyuioplkjhgfdsazxcvbnm1234567890"
+        return (1..maxLength)
+            .map { characters.random() }
+            .joinToString("")
+    }
+
 }

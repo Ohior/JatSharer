@@ -382,46 +382,6 @@ async function handleUpload() {
         }
     }
 }
-//
-//fun generateShowFilesPage(fileList: List<JeyFile>): String {
-//    return createHTML().html {
-//        lang = "en"
-//        head {
-//            meta { charset = "UTF-8" }
-//            meta { name = "viewport"; content = "width=device-width, initial-scale=1.0" }
-//            title("Download Files")
-//            script { src = "https://cdn.tailwindcss.com" }
-//        }
-//        body(classes = "bg-gray-100 min-h-screen p-4") {
-//            div(classes = "fixed bottom-0 left-0 right-0 bg-gray-200 p-4 border-t border-gray-300 shadow-md") {
-//                div(classes = "container mx-auto flex flex-wrap justify-center items-center gap-4") {
-//                    label(classes = " hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out") {
-//                        +"Download Files"
-//                    }
-//                    a(href = "/") {
-//                        label(classes = "file-input-label bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow cursor-pointer transition duration-150 ease-in-out") {
-//                            +"Home Page"
-//                        }
-//                    }
-//                }
-//            }
-//
-//            div(classes = "container mx-auto flex flex-row gap-4") {
-//
-//                fileList.forEach { fileName ->
-//                    val fileInfo = fileName.getFileInfo()
-//                    a(
-//                        href = "/download/${fileInfo[FileInfo.HASH_ID]}",
-//                        classes = "block bg-white hover:bg-gray-100 p-4 rounded-lg shadow transition duration-150 ease-in-out text-blue-600 font-medium"
-//                    ) {
-//                        +fileInfo[FileInfo.NAME]!!
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-
 fun generateShowFilesPage(fileList: List<JeyFile>): String {
     return createHTML().html {
         lang = "en"
@@ -460,7 +420,7 @@ fun generateShowFilesPage(fileList: List<JeyFile>): String {
                 }
             }
 
-            div(classes = "container mx-auto flex flex-row gap-4") {
+            div(classes = "container mx-auto flex flex-col gap-4") {
                 fileList.forEach { file ->
                     val fileInfo = file.getFileInfo()
                     a(

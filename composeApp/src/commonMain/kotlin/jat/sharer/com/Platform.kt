@@ -41,3 +41,6 @@ interface JFilePickerLauncher {
 
 @Composable
 expect fun rememberJFilePicker(onResult: (List<JeyFile>) -> Unit): JFilePickerLauncher
+
+@Composable
+expect fun rememberScreenSize():Pair<Int, Int>

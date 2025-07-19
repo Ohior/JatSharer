@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.DismissValue
@@ -23,15 +24,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import jat.sharer.com.core.ServerManager
+import jat.sharer.com.models.StringAnnotation
 import jat.sharer.com.rememberJFilePicker
+import jat.sharer.com.ui.AnnotatedText
+import jat.sharer.com.ui.ImageSwitcher
 import jat.sharer.com.ui.TextIcon
 import jat.sharer.com.ui.theme.PixelDensity
 import jat.sharer.com.utils.Constants
@@ -39,6 +45,11 @@ import jatsharer.composeapp.generated.resources.Res
 import jatsharer.composeapp.generated.resources.baseline_file_open_24
 import jatsharer.composeapp.generated.resources.baseline_toggle_off_24
 import jatsharer.composeapp.generated.resources.baseline_toggle_on_24
+import jatsharer.composeapp.generated.resources.docs
+import jatsharer.composeapp.generated.resources.folder
+import jatsharer.composeapp.generated.resources.image
+import jatsharer.composeapp.generated.resources.musical_note
+import jatsharer.composeapp.generated.resources.video
 import org.jetbrains.compose.resources.painterResource
 
 object HomeScreen : Screen {
@@ -73,7 +84,7 @@ object HomeScreen : Screen {
                     InfoHalfScreen(Modifier.weight(1f)) { homeViewModel.infoPopup = true }
                 } else {
                     FilesHalfScreen(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).padding(top = PixelDensity.medium),
                         files = deviceFiles,
                         onSwipe = { dv, df ->
                             if (dv == DismissValue.DismissedToStart) {
@@ -222,6 +233,48 @@ object HomeScreen : Screen {
                         contentDescription = "Select Files"
                     )
                 }
+            )
+        }
+    }
+
+
+    @Composable
+    fun InfoHalfScreen(modifier: Modifier = Modifier, infoPopup: () -> Unit) {
+        Column(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            ImageSwitcher(
+                modifier = Modifier
+                    .padding(PixelDensity.large)
+                    .size(PixelDensity.large * 5),
+                images = listOf(
+                    Res.drawable.image,
+                    Res.drawable.folder,
+                    Res.drawable.musical_note,
+                    Res.drawable.video,
+                    Res.drawable.docs
+                ),
+            )
+            AnnotatedText(
+                texts = listOf(
+                    StringAnnotation(
+                        text = "Share files between mobile phones, PC",
+                        style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.Bold)
+                            .toSpanStyle(),
+                    ),
+                    StringAnnotation(
+                        text = " http://${Constants.HOST}:${Constants.PORT}",
+                        style = MaterialTheme.typography.h5.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colors.primary,
+                            textDecoration = TextDecoration.Underline
+                        ).toSpanStyle(),
+                        key = 1,
+                        onClick = { infoPopup() }
+                    )
+                )
             )
         }
     }
