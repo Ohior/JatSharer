@@ -2,14 +2,28 @@ package jat.sharer.com.ui.screens.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.DismissDirection
+import androidx.compose.material.DismissValue
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.SwipeToDismiss
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,8 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalViewConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,12 +40,16 @@ import jat.sharer.com.models.StringAnnotation
 import jat.sharer.com.rememberScreenSize
 import jat.sharer.com.ui.AnnotatedText
 import jat.sharer.com.ui.ImageSwitcher
-import jat.sharer.com.ui.drawUnderLine
 import jat.sharer.com.ui.theme.PixelDensity
 import jat.sharer.com.utils.Constants
 import jat.sharer.com.utils.MediaType
 import jat.sharer.com.utils.Tools
-import jatsharer.composeapp.generated.resources.*
+import jatsharer.composeapp.generated.resources.Res
+import jatsharer.composeapp.generated.resources.docs
+import jatsharer.composeapp.generated.resources.folder
+import jatsharer.composeapp.generated.resources.image
+import jatsharer.composeapp.generated.resources.musical_note
+import jatsharer.composeapp.generated.resources.video
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterialApi::class)
