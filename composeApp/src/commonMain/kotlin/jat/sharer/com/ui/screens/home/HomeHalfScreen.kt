@@ -32,11 +32,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import jat.sharer.com.FileInfo
 import jat.sharer.com.JeyFile
+import jat.sharer.com.models.StringAnnotation
 import jat.sharer.com.rememberScreenSize
+import jat.sharer.com.ui.AnnotatedText
+import jat.sharer.com.ui.ImageSwitcher
 import jat.sharer.com.ui.theme.PixelDensity
+import jat.sharer.com.utils.Constants
 import jat.sharer.com.utils.MediaType
 import jat.sharer.com.utils.Tools
 import jatsharer.composeapp.generated.resources.Res
@@ -135,5 +140,47 @@ fun FilesHalfScreen(
                 }
             }
         }
+    }
+}
+
+
+@Composable
+fun InfoHalfScreen(modifier: Modifier = Modifier, infoPopup: () -> Unit) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        ImageSwitcher(
+            modifier = Modifier
+                .padding(PixelDensity.large)
+                .size(PixelDensity.large * 5),
+            images = listOf(
+                Res.drawable.image,
+                Res.drawable.folder,
+                Res.drawable.musical_note,
+                Res.drawable.video,
+                Res.drawable.docs
+            ),
+        )
+        AnnotatedText(
+            texts = listOf(
+                StringAnnotation(
+                    text = "Share files between mobile phones, PC",
+                    style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.Bold)
+                        .toSpanStyle(),
+                ),
+                StringAnnotation(
+                    text = " http://${Constants.HOST}:${Constants.PORT}",
+                    style = MaterialTheme.typography.h5.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colors.primary,
+                        textDecoration = TextDecoration.Underline
+                    ).toSpanStyle(),
+                    key = 1,
+                    onClick = { infoPopup() }
+                )
+            )
+        )
     }
 }
