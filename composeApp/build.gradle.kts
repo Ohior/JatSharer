@@ -16,6 +16,8 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
+
+    jvm("desktop") // You can rename it, e.g., to "desktop" instead of just "jvm"
     
     listOf(
         iosX64(),
@@ -33,6 +35,9 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+        }
+        iosMain.dependencies {
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -62,6 +67,11 @@ kotlin {
             api(libs.datastore.preferences)
             api(libs.datastore)
         }
+        val desktopMain by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+            }
+        }
     }
 }
 
@@ -84,7 +94,7 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
         }
     }
     compileOptions {

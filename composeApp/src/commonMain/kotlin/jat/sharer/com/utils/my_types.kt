@@ -33,5 +33,3 @@ sealed class MediaType {
         }
     }
 }
-
-enum class RequestAction { SEND, RECIEVE, NONE }

@@ -126,3 +126,45 @@ fun FilesHalfScreen(
         }
     }
 }
+
+
+@Composable
+fun InfoHalfScreen(modifier: Modifier = Modifier, infoPopup: () -> Unit) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        ImageSwitcher(
+            modifier = Modifier
+                .padding(PixelDensity.large)
+                .size(PixelDensity.large * 5),
+            images = listOf(
+                Res.drawable.image,
+                Res.drawable.folder,
+                Res.drawable.musical_note,
+                Res.drawable.video,
+                Res.drawable.docs
+            ),
+        )
+        AnnotatedText(
+            texts = listOf(
+                StringAnnotation(
+                    text = "Click the address",
+                    style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.Bold)
+                        .toSpanStyle(),
+                ),
+                StringAnnotation(
+                    text = " http://${Constants.HOST}:${Constants.PORT}",
+                    style = MaterialTheme.typography.h5.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colors.primary,
+                        textDecoration = TextDecoration.Underline
+                    ).toSpanStyle(),
+                    key = 1,
+                    onClick = { infoPopup() }
+                )
+            )
+        )
+    }
+}

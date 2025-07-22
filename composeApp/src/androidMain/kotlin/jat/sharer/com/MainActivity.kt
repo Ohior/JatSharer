@@ -33,11 +33,13 @@ class MainActivity : ComponentActivity() {
     } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         arrayOf(
             android.Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+            android.Manifest.permission.CHANGE_WIFI_STATE,
         )
     } else {
         arrayOf(
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            android.Manifest.permission.CHANGE_WIFI_STATE,
         )
     }// Register the permissions callback, which handles the user's response to the
 

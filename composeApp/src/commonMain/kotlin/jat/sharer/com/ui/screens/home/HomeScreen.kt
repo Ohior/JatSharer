@@ -2,42 +2,26 @@ package jat.sharer.com.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.DismissValue
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import jat.sharer.com.core.ServerManager
-import jat.sharer.com.models.StringAnnotation
+import jat.sharer.com.models.ConnectionState
 import jat.sharer.com.rememberJFilePicker
-import jat.sharer.com.ui.AnnotatedText
-import jat.sharer.com.ui.ImageSwitcher
 import jat.sharer.com.ui.TextIcon
 import jat.sharer.com.ui.theme.PixelDensity
 import jat.sharer.com.utils.Constants
@@ -45,11 +29,7 @@ import jatsharer.composeapp.generated.resources.Res
 import jatsharer.composeapp.generated.resources.baseline_file_open_24
 import jatsharer.composeapp.generated.resources.baseline_toggle_off_24
 import jatsharer.composeapp.generated.resources.baseline_toggle_on_24
-import jatsharer.composeapp.generated.resources.docs
-import jatsharer.composeapp.generated.resources.folder
-import jatsharer.composeapp.generated.resources.image
-import jatsharer.composeapp.generated.resources.musical_note
-import jatsharer.composeapp.generated.resources.video
+import kotlinx.coroutines.flow.toSet
 import org.jetbrains.compose.resources.painterResource
 
 object HomeScreen : Screen {
@@ -70,6 +50,7 @@ object HomeScreen : Screen {
             val homeViewModel = rememberScreenModel { HomeViewModel() }
             val serverState by ServerManager.listenToServer.collectAsState(false)
             val deviceFiles by homeViewModel.deviceFiles.collectAsState()
+//            val collectHotspot by homeViewModel.hotspotManager.isHotspotOn().collectAsState(false)
             LaunchedEffect(serverState) {
                 if (serverState) {
                     ServerManager.startServer()
@@ -77,11 +58,20 @@ object HomeScreen : Screen {
                     ServerManager.stopServer()
                 }
             }
-            InFoPopup(homeViewModel.infoPopup) { homeViewModel.infoPopup = false }
+            InFoPopup(homeViewModel.infoPopup) { homeViewModel.infoPopup(false) }
+            HotspotPopup(
+                homeViewModel.hotspotPopup is ConnectionState.Load,
+                onDismiss = { homeViewModel.hotspotPopup = ConnectionState.Failed("Hotspot was not set") },
+                onClick = {
+                    homeViewModel.hotspotManager.enableHotspot()
+                    homeViewModel.hotspotPopup = ConnectionState.Success("Hotspot was set")
+                }
+            )
+
             Column(modifier = Modifier.fillMaxSize().padding(pv)) {
                 // DISPLAY FILES IF SELECTED ELSE DISPLAY INFO
                 if (deviceFiles.isEmpty()) {
-                    InfoHalfScreen(Modifier.weight(1f)) { homeViewModel.infoPopup = true }
+                    InfoHalfScreen(Modifier.weight(1f)) { homeViewModel.infoPopup(true) }
                 } else {
                     FilesHalfScreen(
                         modifier = Modifier.weight(1f).padding(top = PixelDensity.medium),
@@ -109,7 +99,19 @@ object HomeScreen : Screen {
                     homeViewModel = homeViewModel,
                     active = serverState
                 ) {
-                    ServerManager.listenToServer.value = !ServerManager.listenToServer.value
+                    when (homeViewModel.hotspotPopup) {
+                        is ConnectionState.Success -> {
+                            ServerManager.listenToServer.value = !ServerManager.listenToServer.value
+                        }
+
+                        is ConnectionState.Load -> {
+                            Unit
+                        }
+
+                        else -> {
+                            homeViewModel.hotspotPopup = ConnectionState.Load
+                        }
+                    }
                 }
             }
         }
@@ -156,6 +158,79 @@ object HomeScreen : Screen {
                                 tint = MaterialTheme.colors.surface
                             )
                         })
+                },
+                backgroundColor = Color.LightGray,
+                shape = RoundedCornerShape(
+                    topStart = PixelDensity.medium,
+                    topEnd = PixelDensity.medium
+                )
+            )
+        }
+    }
+
+
+    @Composable
+    private fun HotspotPopup(hotspotPopup: Boolean, onDismiss: () -> Unit, onClick: () -> Unit) {
+        if (hotspotPopup) {
+            AlertDialog(
+                onDismissRequest = onDismiss,
+                title = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = PixelDensity.medium),
+                        textAlign = TextAlign.Center,
+                        text = "Hot Spot Settings",
+                        style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                },
+                text = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Your hotspot is not active, go to the settings and enable it. This will set up your device as a server for other device to connect to",
+                        style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                },
+                buttons = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = PixelDensity.medium),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        TextIcon(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(PixelDensity.medium))
+                                .background(MaterialTheme.colors.onSurface)
+                                .padding(PixelDensity.small)
+                                .clickable { onDismiss() },
+                            text = "Close",
+                            style = MaterialTheme.typography.h6.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colors.surface
+                            ),
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Close,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colors.surface
+                                )
+                            })
+                        TextIcon(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(PixelDensity.medium))
+                                .background(MaterialTheme.colors.primary)
+                                .padding(PixelDensity.small)
+                                .clickable { onClick() },
+                            text = "Enable",
+                            style = MaterialTheme.typography.h6.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colors.surface
+                            ),
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colors.surface
+                                )
+                            })
+                    }
                 },
                 backgroundColor = Color.LightGray,
                 shape = RoundedCornerShape(
@@ -236,47 +311,4 @@ object HomeScreen : Screen {
             )
         }
     }
-
-
-    @Composable
-    fun InfoHalfScreen(modifier: Modifier = Modifier, infoPopup: () -> Unit) {
-        Column(
-            modifier = modifier,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            ImageSwitcher(
-                modifier = Modifier
-                    .padding(PixelDensity.large)
-                    .size(PixelDensity.large * 5),
-                images = listOf(
-                    Res.drawable.image,
-                    Res.drawable.folder,
-                    Res.drawable.musical_note,
-                    Res.drawable.video,
-                    Res.drawable.docs
-                ),
-            )
-            AnnotatedText(
-                texts = listOf(
-                    StringAnnotation(
-                        text = "Share files between mobile phones, PC",
-                        style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.Bold)
-                            .toSpanStyle(),
-                    ),
-                    StringAnnotation(
-                        text = " http://${Constants.HOST}:${Constants.PORT}",
-                        style = MaterialTheme.typography.h5.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colors.primary,
-                            textDecoration = TextDecoration.Underline
-                        ).toSpanStyle(),
-                        key = 1,
-                        onClick = { infoPopup() }
-                    )
-                )
-            )
-        }
-    }
-
 }

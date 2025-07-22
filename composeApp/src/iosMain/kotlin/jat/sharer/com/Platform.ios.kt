@@ -26,21 +26,6 @@ actual fun getJeyFile(filePath: String): JeyFile {
     return IosJeyFile(filePath)
 }
 
-actual fun createDataStore(): DataStore<Preferences> {
-    val directory = NSFileManager.defaultManager.URLForDirectory(
-        directory = NSDocumentDirectory,
-        inDomain = NSUserDomainMask,
-        appropriateForURL = null,
-        create = false,
-        error = null
-    )
-    return PreferenceDataStoreFactory.createWithPath(
-        produceFile = {
-            val p = requireNotNull(directory).path + "/$DATA_STORE_FILE_NAME"
-            p.toPath()
-        }
-    )
-}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -49,4 +34,9 @@ actual fun rememberScreenSize(): Pair<Int, Int> {
     return remember(size.containerSize) {
         Pair(size.containerSize.width, size.containerSize.height)
     }
+}
+
+@Composable
+actual fun rememberJFilePicker(onResult: (List<JeyFile>) -> Unit): JFilePickerLauncher {
+    TODO("Not yet implemented")
 }
