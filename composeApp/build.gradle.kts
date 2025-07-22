@@ -44,13 +44,14 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             // Ktor
-            implementation("io.ktor:ktor-server-core:3.0.2")
-            implementation("io.ktor:ktor-server-cio:3.0.2")
-            implementation("io.ktor:ktor-client-core:3.0.2")
-            implementation("io.ktor:ktor-client-cio:3.0.2")
+            val ktorVersion = "3.2.2"
+            implementation("io.ktor:ktor-server-core:${ktorVersion}")
+            implementation("io.ktor:ktor-server-cio:${ktorVersion}")
+            implementation("io.ktor:ktor-client-core:${ktorVersion}")
+            implementation("io.ktor:ktor-client-cio:${ktorVersion}")
 
-            implementation("io.ktor:ktor-server-content-negotiation:3.0.2")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.2")
+            implementation("io.ktor:ktor-server-content-negotiation:${ktorVersion}")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
             implementation("org.jetbrains.kotlinx:kotlinx-html:0.8.0")
             // Voyager
             val voyagerVersion = "1.1.0-beta02"
