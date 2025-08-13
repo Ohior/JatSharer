@@ -12,20 +12,59 @@ import kotlinx.coroutines.withContext
 
 object ServerManager {
     val listenToServer = MutableStateFlow(false)
-    private var serverEngine: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine. Configuration>? = null
+    private var serverEngine: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? =
+        null
+
     suspend fun startServer() {
-        withContext(Dispatchers.IO) {
-            if (serverEngine == null) {
-                serverEngine = embeddedServer(
-                    CIO,
-                    port = Constants.PORT,
-                    host = Constants.HOST
-                ) {
-                    configureRouting()
-                }.apply {
-                    start(wait = false) // Start without blocking
+        try {
+            withContext(Dispatchers.IO) {
+                if (serverEngine == null) {
+                    serverEngine = embeddedServer(
+                        CIO,
+                        port = Constants.PORT,
+                        host = Constants.HOST
+                    ) {
+                        configureRouting()
+                    }.apply {
+                        start(wait = false) // Start without blocking
+                    }
+                    listenToServer.value = true
                 }
-                listenToServer.value = true
+            }
+        } catch (e: Exception) {
+            println("Error starting server 2: $e")
+            Constants.myHost.value = "http://${Constants.SAMSUNG_HOST}:${Constants.PORT}"
+            withContext(Dispatchers.IO) {
+                if (serverEngine == null) {
+                    serverEngine = embeddedServer(
+                        CIO,
+                        port = Constants.PORT,
+                        host = Constants.SAMSUNG_HOST
+                    ) {
+                        configureRouting()
+                    }.apply {
+                        start(wait = false) // Start without blocking
+                    }
+                    listenToServer.value = true
+                }
+            }
+
+        } catch (e: Exception) {
+            println("Error starting server: $e")
+            withContext(Dispatchers.IO) {
+                Constants.myHost.value = "http://${Constants.WILD_HOST}:${Constants.PORT}"
+                if (serverEngine == null) {
+                    serverEngine = embeddedServer(
+                        CIO,
+                        port = Constants.PORT,
+                        host = Constants.WILD_HOST
+                    ) {
+                        configureRouting()
+                    }.apply {
+                        start(wait = false) // Start without blocking
+                    }
+                    listenToServer.value = true
+                }
             }
         }
     }

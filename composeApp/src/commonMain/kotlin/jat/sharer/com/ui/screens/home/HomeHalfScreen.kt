@@ -166,12 +166,12 @@ fun InfoHalfScreen(modifier: Modifier = Modifier, infoPopup: () -> Unit) {
         AnnotatedText(
             texts = listOf(
                 StringAnnotation(
-                    text = "Share files between mobile phones, PC",
+                    text = "Share files between mobile phones, PC ",
                     style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.Bold)
                         .toSpanStyle(),
                 ),
                 StringAnnotation(
-                    text = " http://${Constants.HOST}:${Constants.PORT}",
+                    text = Constants.myHost.value,
                     style = MaterialTheme.typography.h5.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colors.primary,

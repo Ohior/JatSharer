@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -29,7 +30,6 @@ import jatsharer.composeapp.generated.resources.Res
 import jatsharer.composeapp.generated.resources.baseline_file_open_24
 import jatsharer.composeapp.generated.resources.baseline_toggle_off_24
 import jatsharer.composeapp.generated.resources.baseline_toggle_on_24
-import kotlinx.coroutines.flow.toSet
 import org.jetbrains.compose.resources.painterResource
 
 object HomeScreen : Screen {
@@ -61,7 +61,12 @@ object HomeScreen : Screen {
             InFoPopup(homeViewModel.infoPopup) { homeViewModel.infoPopup(false) }
             HotspotPopup(
                 homeViewModel.hotspotPopup is ConnectionState.Load,
-                onDismiss = { homeViewModel.hotspotPopup = ConnectionState.Failed("Hotspot was not set") },
+                onDismiss = {
+                    homeViewModel.hotspotPopup = ConnectionState.Success("Hotspot was set")
+                },
+                onCancel = {
+                    homeViewModel.hotspotPopup = ConnectionState.Failed("Hotspot was not set")
+                },
                 onClick = {
                     homeViewModel.hotspotManager.enableHotspot()
                     homeViewModel.hotspotPopup = ConnectionState.Success("Hotspot was set")
@@ -170,17 +175,29 @@ object HomeScreen : Screen {
 
 
     @Composable
-    private fun HotspotPopup(hotspotPopup: Boolean, onDismiss: () -> Unit, onClick: () -> Unit) {
+    private fun HotspotPopup(
+        hotspotPopup: Boolean,
+        onDismiss: () -> Unit,
+        onCancel: () -> Unit,
+        onClick: () -> Unit
+    ) {
         if (hotspotPopup) {
             AlertDialog(
                 onDismissRequest = onDismiss,
                 title = {
-                    Text(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = PixelDensity.medium),
-                        textAlign = TextAlign.Center,
-                        text = "Hot Spot Settings",
-                        style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.SemiBold)
-                    )
+                    Row(Modifier.fillMaxWidth().padding(vertical = PixelDensity.medium), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Hot Spot Settings",
+                            style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        IconButton(onClick = onDismiss){
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = null,
+                                tint = MaterialTheme.colors.onSurface
+                            )
+                        }
+                    }
                 },
                 text = {
                     Text(
@@ -191,7 +208,8 @@ object HomeScreen : Screen {
                 },
                 buttons = {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = PixelDensity.medium),
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = PixelDensity.medium),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         TextIcon(
@@ -199,7 +217,7 @@ object HomeScreen : Screen {
                                 .clip(RoundedCornerShape(PixelDensity.medium))
                                 .background(MaterialTheme.colors.onSurface)
                                 .padding(PixelDensity.small)
-                                .clickable { onDismiss() },
+                                .clickable { onCancel() },
                             text = "Close",
                             style = MaterialTheme.typography.h6.copy(
                                 fontWeight = FontWeight.SemiBold,
