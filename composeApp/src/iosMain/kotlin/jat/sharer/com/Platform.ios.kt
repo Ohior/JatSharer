@@ -6,16 +6,45 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
-import kotlinx.cinterop.ExperimentalForeignApi
-import okio.Path.Companion.toPath
-import platform.Foundation.NSDocumentDirectory
-import platform.Foundation.NSFileManager
-import platform.Foundation.NSUserDomainMask
+import kotlinx.cinterop.*
 import platform.UIKit.UIDevice
+import platform.darwin.freeifaddrs
+import platform.darwin.getifaddrs
+import platform.darwin.ifaddrs
+import platform.darwin.inet_ntop
+import platform.posix.*
 
+actual fun getDeviceIpAddress(): String? {
+    memScoped {
+        val ifAddrPtr = alloc<CPointerVar<ifaddrs>>()
+        if (getifaddrs(ifAddrPtr.ptr) == 0) {
+            var ptr = ifAddrPtr.value
+            while (ptr != null) {
+                val ifa = ptr.pointed
+                val saFamily = ifa.ifa_addr?.pointed?.sa_family?.toInt()
+
+                if (saFamily == AF_INET) { // IPv4 only
+                    val addr = allocArray<ByteVar>(INET_ADDRSTRLEN)
+                    val sockAddrIn = ifa.ifa_addr!!.reinterpret<sockaddr_in>()
+                    inet_ntop(
+                        AF_INET,
+                        sockAddrIn.pointed.sin_addr.ptr,
+                        addr,
+                        INET_ADDRSTRLEN.toUInt()
+                    )
+                    val ip = addr.toKString()
+                    if (ip != "127.0.0.1") {
+                        freeifaddrs(ifAddrPtr.value)
+                        return ip
+                    }
+                }
+                ptr = ifa.ifa_next
+            }
+            freeifaddrs(ifAddrPtr.value)
+        }
+    }
+    return null
+}
 
 actual fun getPlatform(): Platform = Platform.Ios(
     name = UIDevice.currentDevice.systemName(),
@@ -38,5 +67,9 @@ actual fun rememberScreenSize(): Pair<Int, Int> {
 
 @Composable
 actual fun rememberJFilePicker(onResult: (List<JeyFile>) -> Unit): JFilePickerLauncher {
+    TODO("Not yet implemented")
+}
+
+actual fun getHotspotManager(): HotspotManager {
     TODO("Not yet implemented")
 }

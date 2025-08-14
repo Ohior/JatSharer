@@ -13,6 +13,8 @@ sealed class Platform {
 
 expect fun getPlatform(): Platform
 
+expect fun getDeviceIpAddress(): String?
+
 enum class FileInfo {
     NAME, PATH, SIZE, LAST_MODIFIED, HASH_ID
 }
@@ -31,10 +33,11 @@ abstract class JeyFile(private val filePath: String) {
     abstract fun byteChannel(): ByteWriteChannel
 }
 
-interface HotspotManager{
+interface HotspotManager {
     fun isHotspotOn(): Flow<Boolean>
     fun enableHotspot()
 }
+
 expect fun getJeyFile(filePath: String): JeyFile
 
 
@@ -42,6 +45,6 @@ expect fun getJeyFile(filePath: String): JeyFile
 expect fun rememberJFilePicker(onResult: (List<JeyFile>) -> Unit): JFilePickerLauncher
 
 @Composable
-expect fun rememberScreenSize():Pair<Int, Int>
+expect fun rememberScreenSize(): Pair<Int, Int>
 
 expect fun getHotspotManager(): HotspotManager

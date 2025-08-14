@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import java.net.Inet4Address
+import java.net.NetworkInterface
 
 
 actual fun getPlatform(): Platform = Platform.Android(
@@ -26,4 +28,22 @@ actual fun rememberScreenSize(): Pair<Int, Int> {
 
 actual fun getHotspotManager(): HotspotManager {
     return AndroidHotspotManager(MainActivity.instance)
+}
+
+actual fun getDeviceIpAddress(): String? {
+    return try {
+        val interfaces = NetworkInterface.getNetworkInterfaces()
+        for (intf in interfaces) {
+            val addresses = intf.inetAddresses
+            for (addr in addresses) {
+                if (!addr.isLoopbackAddress && addr is Inet4Address) {
+                    return addr.hostAddress
+                }
+            }
+        }
+        null
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }

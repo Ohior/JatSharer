@@ -7,8 +7,6 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.core.isEmpty
-import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,6 +14,8 @@ import kotlinx.io.readByteArray
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import java.nio.file.Paths
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -108,4 +108,26 @@ actual fun rememberJFilePicker(onResult: (List<JeyFile>) -> Unit): JFilePickerLa
         }
     }
     return DesktopFilePickerLauncher(trigger)
+}
+
+actual fun getDeviceIpAddress(): String? {
+    return try {
+        val interfaces = NetworkInterface.getNetworkInterfaces()
+        for (intf in interfaces) {
+            val addresses = intf.inetAddresses
+            for (addr in addresses) {
+                if (!addr.isLoopbackAddress && addr is Inet4Address) {
+                    return addr.hostAddress
+                }
+            }
+        }
+        null
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+actual fun getHotspotManager(): HotspotManager {
+    TODO("Not yet implemented")
 }

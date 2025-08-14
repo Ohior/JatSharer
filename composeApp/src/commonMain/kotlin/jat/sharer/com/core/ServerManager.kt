@@ -16,8 +16,8 @@ object ServerManager {
         null
 
     suspend fun startServer() {
-        try {
-            withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
+            try {
                 if (serverEngine == null) {
                     serverEngine = embeddedServer(
                         CIO,
@@ -30,41 +30,9 @@ object ServerManager {
                     }
                     listenToServer.value = true
                 }
-            }
-        } catch (e: Exception) {
-            println("Error starting server 2: $e")
-            Constants.myHost.value = "http://${Constants.SAMSUNG_HOST}:${Constants.PORT}"
-            withContext(Dispatchers.IO) {
-                if (serverEngine == null) {
-                    serverEngine = embeddedServer(
-                        CIO,
-                        port = Constants.PORT,
-                        host = Constants.SAMSUNG_HOST
-                    ) {
-                        configureRouting()
-                    }.apply {
-                        start(wait = false) // Start without blocking
-                    }
-                    listenToServer.value = true
-                }
-            }
-
-        } catch (e: Exception) {
-            println("Error starting server: $e")
-            withContext(Dispatchers.IO) {
-                Constants.myHost.value = "http://${Constants.WILD_HOST}:${Constants.PORT}"
-                if (serverEngine == null) {
-                    serverEngine = embeddedServer(
-                        CIO,
-                        port = Constants.PORT,
-                        host = Constants.WILD_HOST
-                    ) {
-                        configureRouting()
-                    }.apply {
-                        start(wait = false) // Start without blocking
-                    }
-                    listenToServer.value = true
-                }
+            } catch (e: Exception) {
+                println("Error starting server: $e")
+                listenToServer.value = false
             }
         }
     }
