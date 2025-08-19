@@ -19,7 +19,7 @@ import java.net.NetworkInterface
 import java.nio.file.Paths
 
 @OptIn(ExperimentalComposeUiApi::class)
-@androidx.compose.runtime.Composable
+@Composable
 actual fun rememberScreenSize(): Pair<Int, Int> {
     val size = LocalWindowInfo.current
     return remember(size) {
@@ -38,7 +38,8 @@ actual fun getJeyFile(filePath: String): JeyFile {
                     // Get the user's default downloads folder
                     val downloadsPath = Paths.get(System.getProperty("user.home"), "Downloads")
 //                    val outputFile = downloadsPath.resolve("downloaded_file.bin").toFile()
-                    val fileName = filePath.split("/").lastOrNull()?.takeIf { it.isNotBlank() } ?: "downloaded_file"
+                    val fileName = filePath.split("/").lastOrNull()?.takeIf { it.isNotBlank() }
+                        ?: "downloaded_file"
                     val outputFile = downloadsPath.resolve(fileName).toFile()
 
                     // Create output stream
@@ -103,7 +104,8 @@ actual fun rememberJFilePicker(onResult: (List<JeyFile>) -> Unit): JFilePickerLa
                 isMultipleMode = true
                 isVisible = true
             }
-            val files = fileDialog.files?.map { getJeyFile(it.absolutePath) }?.toList() ?: emptyList()
+            val files =
+                fileDialog.files?.map { getJeyFile(it.absolutePath) }?.toList() ?: emptyList()
             onResult(files)
         }
     }
@@ -129,5 +131,13 @@ actual fun getDeviceIpAddress(): String? {
 }
 
 actual fun getHotspotManager(): HotspotManager {
-    TODO("Not yet implemented")
+    return DesktopHotspotManager()
+}
+
+actual fun getScreenKeeper(): ScreenKeeper {
+    return object : ScreenKeeper {
+        override fun keepScreenOn(enable: Boolean) {
+            println("⚠️ Warning: Screen keeping not supported on this platform")
+        }
+    }
 }

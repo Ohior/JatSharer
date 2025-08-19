@@ -1,6 +1,7 @@
 package jat.sharer.com
 
 import android.os.Build
+import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
@@ -45,5 +46,18 @@ actual fun getDeviceIpAddress(): String? {
     } catch (e: Exception) {
         e.printStackTrace()
         null
+    }
+}
+
+actual fun getScreenKeeper(): ScreenKeeper {
+    return object : ScreenKeeper {
+        private val activity = MainActivity.instance
+        override fun keepScreenOn(enable: Boolean) {
+            if (enable) {
+                activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
     }
 }

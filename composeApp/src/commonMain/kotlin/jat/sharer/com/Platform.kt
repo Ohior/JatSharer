@@ -10,6 +10,12 @@ sealed class Platform {
     data class Desktop(val name: String, val version: String? = null) : Platform()
 }
 
+interface  ScreenKeeper {
+    fun keepScreenOn(enable: Boolean)
+}
+
+expect fun getScreenKeeper(): ScreenKeeper
+
 
 expect fun getPlatform(): Platform
 

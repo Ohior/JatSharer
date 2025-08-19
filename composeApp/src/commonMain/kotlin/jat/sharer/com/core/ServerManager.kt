@@ -4,20 +4,27 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
+import jat.sharer.com.getScreenKeeper
 import jat.sharer.com.utils.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 object ServerManager {
     val listenToServer = MutableStateFlow(false)
-    private var serverEngine: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? =
-        null
+    private var serverEngine: EmbeddedServer<
+            CIOApplicationEngine, CIOApplicationEngine.Configuration
+            >? = null
+    private val screenKeeper = getScreenKeeper()
 
     suspend fun startServer() {
         withContext(Dispatchers.IO) {
             try {
+                launch(Dispatchers.Main) {
+                    screenKeeper.keepScreenOn(true)
+                }
                 if (serverEngine == null) {
                     serverEngine = embeddedServer(
                         CIO,
@@ -42,6 +49,9 @@ object ServerManager {
             serverEngine?.stop(0, 0)
             serverEngine = null
             listenToServer.value = false
+            launch(Dispatchers.Main) {
+                screenKeeper.keepScreenOn(false)
+            }
         }
     }
 }

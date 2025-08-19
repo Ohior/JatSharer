@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalWindowInfo
 import kotlinx.cinterop.*
+import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
 import platform.darwin.freeifaddrs
 import platform.darwin.getifaddrs
@@ -72,4 +73,12 @@ actual fun rememberJFilePicker(onResult: (List<JeyFile>) -> Unit): JFilePickerLa
 
 actual fun getHotspotManager(): HotspotManager {
     TODO("Not yet implemented")
+}
+
+actual fun getScreenKeeper(): ScreenKeeper {
+    return object : ScreenKeeper {
+        override fun keepScreenOn(enable: Boolean) {
+            UIApplication.sharedApplication.idleTimerDisabled = enable
+        }
+    }
 }
